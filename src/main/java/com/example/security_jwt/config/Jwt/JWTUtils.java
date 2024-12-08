@@ -40,7 +40,6 @@ public class JWTUtils {
         secret = Base64.getEncoder().encodeToString(secret.getBytes());
     }
 
-    /*Метод для генерации JWT токена на основе данных пользователя*/
     public String generateToken(UserDetails userDetails) {
 
         Claims claims = Jwts.claims().add("role",  userDetails.getAuthorities())
@@ -64,7 +63,7 @@ public class JWTUtils {
     public String resolveToken(HttpServletRequest req) {
         String bearerToken = req.getHeader("Authorization");
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7, bearerToken.length());
+            return bearerToken.substring(7);
         }
         return null;
     }
@@ -74,17 +73,13 @@ public class JWTUtils {
         return extractClaims(token, Claims::getSubject);
     }
 
-    private <T> T extractClaims(String token, Function<Claims, T> claimsTFunction {
+    private <T> T extractClaims(String token, Function<Claims, T> claimsTFunction) {
         Claims claims = Jwts.parser().setSigningKey(secret)
                 .build().parseClaimsJws(token).getBody();
         return claimsTFunction.apply(claims);
     }
 
-    public boolean isTokenValid(String token, UserDetails userDetails) {
-        return extractUsername(token).equals(userDetails.getUsername())
-                && !isTokenExpired(token);
-    }
-
-    private boolean isTokenExpired(String token) {
+    public boolean isTokenExpired(String token) {
         return extractClaims(token, Claims::getExpiration).before(new Date());
     }
+}
