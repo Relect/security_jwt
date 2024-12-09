@@ -1,5 +1,6 @@
 package com.example.security_jwt.config.Jwt;
 
+import com.example.security_jwt.service.JWTUtils;
 import com.example.security_jwt.service.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -31,15 +32,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         final String authHeader = request.getHeader("Authorization");
         final String jwtToken;
-        final String userEmail;
+        final String username;
         if (authHeader == null || authHeader.isBlank()) {
             filterChain.doFilter(request, response);
             return;
         }
         jwtToken = authHeader.substring(7);
-        userEmail = jwtUtils.extractUsername(jwtToken);
-        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userService.loadUserByUsername(userEmail);
+        username = jwtUtils.extractUsername(jwtToken);
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails userDetails = userService.loadUserByUsername(username);
 
             if (jwtUtils.isTokenValid(jwtToken, userDetails)) {
                 SecurityContext securityContext = SecurityContextHolder.createEmptyContext();

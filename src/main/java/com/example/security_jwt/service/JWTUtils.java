@@ -1,4 +1,4 @@
-package com.example.security_jwt.config.Jwt;
+package com.example.security_jwt.service;
 
 import io.jsonwebtoken.*;
 import org.springframework.security.core.userdetails.UserDetails;

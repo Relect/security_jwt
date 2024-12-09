@@ -36,20 +36,14 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests((request) -> request
-                        .requestMatchers("/login", "/home", "/h2-console").permitAll()
-                        .requestMatchers("/admin").hasAuthority(Role.SUPER_ADMIN.name())
-                        .requestMatchers("/moderator").hasAuthority(Role.MODERATOR.name())
+                        .requestMatchers("auth/**", "/h2-console").permitAll()
+                        .requestMatchers("/user/**").hasAuthority(Role.USER.name())
+                        .requestMatchers("/adminuser/**").hasAnyAuthority(Role.USER.name(), Role.SUPER_ADMIN.name())
                         .anyRequest().authenticated())
                 .sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(loggingFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .formLogin((form) -> form
-                        .loginPage("/login")
-                        .defaultSuccessUrl("/success")
-                        .failureUrl("/login?error=true")
-                        .permitAll())
-                .logout(LogoutConfigurer::permitAll);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
