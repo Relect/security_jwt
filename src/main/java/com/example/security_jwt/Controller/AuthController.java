@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/auth")
 public class AuthController {
-    private AuthService authService;
+    private final AuthService authService;
 
     @PostMapping("/signup")
     public ResponseEntity<ReqRes> signUp(@RequestBody ReqRes signUpRequest){

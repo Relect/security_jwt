@@ -6,6 +6,7 @@ import com.example.security_jwt.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +28,8 @@ public class AuthService {
             user.setUsername(regitstrantRequest.getUsername());
             user.setPassword(passwordEncoder.encode(regitstrantRequest.getPassword()));
             user.setRole(regitstrantRequest.getRole());
+            user.setAccountNonLocked(true);
+            user.setFailedLoginAttempts(0);
             User result = userRepository.save(user);
             if (result != null && user.getId() > 0) {
                 resp.setUser(result);
@@ -47,7 +50,7 @@ public class AuthService {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                     signinRequest.getUsername(), signinRequest.getPassword()));
             var user = userRepository.findByUsername(signinRequest.getUsername()).orElseThrow();
-            System.out.println("USER IS: "+ user);
+            System.out.println("USER IS: " + user);
             var jwt = jwtUtils.generateToken(user);
             var refreshToken = jwtUtils.generateRefreshToken(new HashMap<>(), user);
             response.setStatusCode(200);
@@ -55,6 +58,20 @@ public class AuthService {
             response.setRefreshToken(refreshToken);
             response.setExpirationTime("24Hr");
             response.setMessage("Successfully Signed In");
+        } catch (AuthenticationException e) {
+            var user1 = userRepository.findByUsername(signinRequest.getUsername()).orElse(null);
+            if (user1 != null && user1.isAccountNonLocked()) {
+                int attemp = user1.getFailedLoginAttempts();
+                if (attemp < 5 ) {
+                    attemp++;
+                    userRepository.save(user1);
+                    user1.setFailedLoginAttempts(attemp);
+                } else {
+                    user1.setAccountNonLocked(false);
+                }
+            }
+            response.setStatusCode(403);
+            response.setError(e.getMessage());
         } catch (Exception e){
             response.setStatusCode(500);
             response.setError(e.getMessage());
