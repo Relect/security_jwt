@@ -4,6 +4,7 @@ import com.example.security_jwt.config.Jwt.JwtAuthenticationFilter;
 import com.example.security_jwt.model.Role;
 import com.example.security_jwt.service.UserService;
 import lombok.AllArgsConstructor;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -35,15 +36,15 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
                 .authorizeHttpRequests((request) -> request
-                        .requestMatchers("/auth/**", "/h2-console").permitAll()
+                        .requestMatchers(PathRequest.toH2Console()).permitAll()
+                        .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/user/**").hasAuthority(Role.USER.name())
                         .requestMatchers("/adminuser/**").hasAnyAuthority(Role.USER.name(), Role.SUPER_ADMIN.name())
                         .anyRequest().authenticated())
                 .sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                //.requiresChannel(channel -> channel
-                  //      .requestMatchers(r -> true).requiresSecure()) // Перенаправление HTTP на HTTPS
+                .requiresChannel(channel -> channel
+                      .requestMatchers(r -> true).requiresSecure()) // Перенаправление HTTP на HTTPS
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(loggingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
