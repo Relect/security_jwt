@@ -64,10 +64,11 @@ public class AuthService {
                 int attemp = user1.getFailedLoginAttempts();
                 if (attemp < 5 ) {
                     attemp++;
-                    userRepository.save(user1);
                     user1.setFailedLoginAttempts(attemp);
+                    userRepository.save(user1);
                 } else {
                     user1.setAccountNonLocked(false);
+                    userRepository.save(user1);
                 }
             }
             response.setStatusCode(403);
