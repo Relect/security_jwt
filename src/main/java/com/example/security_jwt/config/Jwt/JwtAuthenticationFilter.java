@@ -1,36 +1,56 @@
 package com.example.security_jwt.config.Jwt;
 
+import com.example.security_jwt.service.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.security.core.Authentication;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.filter.GenericFilterBean;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-public class JwtAuthenticationFilter extends GenericFilterBean {
+@Component
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JWTUtils jwtUtils;
+    private final UserService userService;
 
-    public JwtAuthenticationFilter(JWTUtils jwtUtils) {
+    public JwtAuthenticationFilter(JWTUtils jwtUtils, UserService userService) {
         this.jwtUtils = jwtUtils;
+        this.userService = userService;
     }
 
+
     @Override
-    public void doFilter(ServletRequest req, ServletResponse res, FilterChain filterChain)
-            throws IOException, ServletException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        final String authHeader = request.getHeader("Authorization");
+        final String jwtToken;
+        final String userEmail;
+        if (authHeader == null || authHeader.isBlank()) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+        jwtToken = authHeader.substring(7);
+        userEmail = jwtUtils.extractUsername(jwtToken);
+        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails userDetails = userService.loadUserByUsername(userEmail);
 
-        String token = jwtUtils.resolveToken((HttpServletRequest) req);
-        if (token != null && jwtUtils.isTokenExpired(token)) {
-            Authentication auth = jwtUtils.getAuthentication(token);
-
-            if (auth != null) {
-                SecurityContextHolder.getContext().setAuthentication(auth);
+            if (jwtUtils.isTokenValid(jwtToken, userDetails)) {
+                SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+                UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(
+                        userDetails, null, userDetails.getAuthorities()
+                );
+                token.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                securityContext.setAuthentication(token);
+                SecurityContextHolder.setContext(securityContext);
             }
         }
-        filterChain.doFilter(req, res);
+        filterChain.doFilter(request, response);
     }
 }

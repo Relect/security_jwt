@@ -29,15 +29,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final UserService userDetailsService;
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final LoggingFilter loggingFilter;
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
                 .authorizeHttpRequests((request) -> request
-                        .requestMatchers("/login").permitAll()
+                        .requestMatchers("/login", "/home", "/h2-console").permitAll()
                         .requestMatchers("/admin").hasAuthority(Role.SUPER_ADMIN.name())
                         .requestMatchers("/moderator").hasAuthority(Role.MODERATOR.name())
                         .anyRequest().authenticated())

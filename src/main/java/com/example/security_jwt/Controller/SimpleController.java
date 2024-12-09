@@ -21,8 +21,8 @@ public class SimpleController {
         return "success";
     }
 
-    @GetMapping("/private")
+    @GetMapping("/moderator")
     public String getPrivate() {
-        return "private";
+        return "moderator";
     }
 }
