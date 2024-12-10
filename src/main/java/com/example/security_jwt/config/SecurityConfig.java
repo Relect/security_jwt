@@ -43,11 +43,11 @@ public class SecurityConfig {
                         .requestMatchers("/adminuser/**").hasAnyAuthority(Role.USER.name(), Role.SUPER_ADMIN.name())
                         .anyRequest().authenticated())
                 .sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .requiresChannel(channel -> channel
-                      .requestMatchers(r -> true).requiresSecure()) // Перенаправление HTTP на HTTPS
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(loggingFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .requiresChannel(channel -> channel
+                        .requestMatchers(r -> true).requiresSecure()); // Перенаправление HTTP на HTTPS
 
         return http.build();
     }
